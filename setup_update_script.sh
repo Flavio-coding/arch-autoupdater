@@ -42,16 +42,21 @@ install_new_rule() {
     # Make the update script executable
     sudo chmod +x $SCRIPT_PATH
 
-    # Add the cron job
-    (crontab -l 2>/dev/null; echo "$minute $hour * * * $SCRIPT_PATH") | sudo crontab -
+    # Check if the rule already exists
+    existing_rule=$(sudo crontab -l 2>/dev/null | grep "$SCRIPT_PATH")
+    if [[ -z "$existing_rule" ]]; then
+        # Add the cron job if it doesn't exist
+        (sudo crontab -l 2>/dev/null; echo "$minute $hour * * * $SCRIPT_PATH") | sudo crontab -
+        echo "The update script will run every day at $hour:$minute."
+    else
+        echo "The update rule already exists."
+    fi
 
     # Configure sudo to not require a password for the command
     echo "$(whoami) ALL=(ALL) NOPASSWD: $SCRIPT_PATH" | sudo tee /etc/sudoers.d/update_script > /dev/null
 
     # Set the correct permissions
     sudo chmod 440 /etc/sudoers.d/update_script
-
-    echo "Setup completed! The update script will run every day at $hour:$minute."
 
     # Prompt to reboot the system
     read -p "Do you want to reboot the system now? (y/n): " choice
@@ -67,7 +72,7 @@ install_new_rule() {
 view_and_remove_rules() {
     echo "Existing update rules:"
 
-    # List the cron jobs related to the update script
+    # List the cron jobs related to the update script for root
     cron_jobs=$(sudo crontab -l 2>/dev/null | grep "/usr/local/bin/update_script.sh")
 
     if [[ -z "$cron_jobs" ]]; then
@@ -84,7 +89,7 @@ view_and_remove_rules() {
         read -p "Enter the number of the rule to remove: " job_number
         cron_line=$(echo "$cron_jobs" | sed -n "${job_number}p")
         if [[ -n "$cron_line" ]]; then
-            # Remove the selected cron job
+            # Remove the selected cron job for root
             sudo crontab -l | grep -v "$cron_line" | sudo crontab -
             echo "The selected update rule has been removed."
         else
