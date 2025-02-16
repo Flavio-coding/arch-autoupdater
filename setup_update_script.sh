@@ -13,16 +13,6 @@ install_new_rule() {
     # Path for the update script
     SCRIPT_PATH="/usr/local/bin/update_script.sh"
 
-    # Check if the update script is already installed
-    if [ -f "$SCRIPT_PATH" ]; then
-        read -p "The update script is already installed. Do you want to reinstall it? [y/n]: " reinstall_choice
-        if [[ "$reinstall_choice" != "y" ]]; then
-            echo "Exiting without changes."
-            rm -- "$0"  # Auto-delete the script
-            exit 0
-        fi
-    fi
-
     # Ask user for the hour in 24-hour format
     while true; do
         read -p "Please enter the hour in 24-hour format (00-23): " hour
